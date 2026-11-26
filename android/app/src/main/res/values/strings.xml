@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Palakpakan Meter</string>
+    <string name="title_activity_main">Palakpakan Meter</string>
+    <string name="package_name">com.markdave.palakpakan</string>
+    <string name="custom_url_scheme">com.markdave.palakpakan</string>
+</resources>

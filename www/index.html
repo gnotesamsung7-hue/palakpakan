@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="fil">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Palakpakan Meter — Sukatan ng Hiyawan</title>
+<script src="lib/qrcode.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Bungee+Shade&family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--blue:#0038A8;--red:#CE1126;--yellow:#FCD116;--green:#13994a;--orange:#ff7a00;--ink:#2a1a0e;--cream:#fff6df}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:Poppins,system-ui,sans-serif;color:var(--ink);min-height:100vh;
+  /* banig weave background */
+  background:
+    repeating-linear-gradient(45deg,rgba(206,17,38,.07) 0 14px,transparent 14px 28px),
+    repeating-linear-gradient(-45deg,rgba(0,56,168,.07) 0 14px,transparent 14px 28px),
+    #f7e3b5;}
+h1,h2,.sign{font-family:Bungee,Impact,sans-serif;font-weight:400;letter-spacing:.5px}
+button{font-family:inherit;cursor:pointer;border:none;border-radius:12px;font-weight:800}
+button:disabled{opacity:.45;cursor:not-allowed}
+
+/* banderitas */
+.banderitas{position:relative;height:46px;overflow:hidden}
+.banderitas::before{content:"";position:absolute;left:0;right:0;top:6px;height:3px;background:#5a3b1c}
+.flags{display:flex;justify-content:space-between;padding:0 4px;position:relative;top:7px}
+.flags span{width:30px;height:34px;clip-path:polygon(0 0,100% 0,50% 100%);transform-origin:50% 0;animation:sway 2.4s ease-in-out infinite alternate}
+@keyframes sway{from{transform:rotate(-7deg)}to{transform:rotate(7deg)}}
+
+header{text-align:center;padding:2px 12px 8px}
+.plate{display:inline-flex;align-items:center;gap:14px;padding:10px 26px;border-radius:18px;
+  background:linear-gradient(180deg,#fdfdfd,#c9ccd1 45%,#f4f4f4 55%,#a9adb3);
+  border:4px solid var(--ink);box-shadow:0 6px 0 var(--ink)}
+.plate h1{margin:0;font-size:clamp(26px,5vw,52px);color:var(--red);text-shadow:3px 3px 0 var(--yellow),5px 5px 0 var(--blue)}
+.sub{margin:10px 0 0;font-weight:600}
+.topbtns{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:12px}
+.b-blue{background:var(--blue);color:#fff;padding:11px 18px;box-shadow:0 4px 0 #001f60}
+.b-red{background:var(--red);color:#fff;padding:11px 18px;box-shadow:0 4px 0 #7d0816}
+.b-yel{background:var(--yellow);color:var(--ink);padding:11px 18px;box-shadow:0 4px 0 #a88a00}
+.b-ghost{background:#fff;color:var(--ink);padding:9px 14px;border:2px solid var(--ink)}
+button:active:not(:disabled){transform:translateY(3px);box-shadow:none}
+
+.err{display:none;max-width:900px;margin:10px auto 0;background:#fff;border:3px solid var(--red);border-radius:12px;padding:10px 14px;font-weight:600}
+
+main{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:18px;max-width:1250px;margin:16px auto;padding:0 14px 20px}
+@media (max-width:860px){main{grid-template-columns:1fr}}
+.card{background:var(--cream);border:4px solid var(--ink);border-radius:20px;box-shadow:0 7px 0 var(--ink);overflow:hidden}
+.stripe{height:12px;background:linear-gradient(180deg,var(--red) 0 33%,var(--yellow) 33% 66%,var(--blue) 66%)}
+.inner{padding:14px 18px 18px}
+.card h2{margin:4px 0 10px;font-size:22px;color:var(--blue)}
+
+/* volume level chart */
+.chart{max-width:560px;margin:0 auto;background:#fff;border:4px solid var(--ink);border-radius:18px;padding:10px 12px 12px;box-shadow:0 5px 0 rgba(0,0,0,.25)}
+.chart h3{margin:2px 0 10px;text-align:center;font-family:Georgia,"Times New Roman",serif;font-weight:900;font-size:clamp(26px,4vw,38px)}
+.lv{display:grid;grid-template-columns:clamp(70px,14vw,104px) minmax(0,1fr);border:3px solid var(--ink);border-bottom:none;opacity:.5;filter:grayscale(.35);transition:opacity .12s,filter .12s,transform .12s}
+.lv:last-child{border-bottom:3px solid var(--ink)}
+.lv.on{opacity:1;filter:none;transform:scale(1.035);box-shadow:0 0 0 5px var(--yellow),0 6px 16px rgba(0,0,0,.35);position:relative;z-index:1}
+.lv .num{display:grid;place-items:center;font-family:Bungee,Impact,sans-serif;font-size:clamp(38px,7vw,60px);color:#fff;text-shadow:-2px -2px 0 var(--ink),2px -2px 0 var(--ink),-2px 2px 0 var(--ink),2px 2px 0 var(--ink),0 3px 0 var(--ink)}
+.lv .txt{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 12px;min-height:clamp(62px,9vw,84px);background:#fff}
+.lv .txt b{font-family:Georgia,"Times New Roman",serif;font-weight:900;font-size:clamp(18px,2.8vw,27px);line-height:1.1}
+.lv .txt small{display:block;font-family:Poppins,sans-serif;font-weight:600;font-size:12px;color:#7a6440;margin-top:3px}
+.lv .pic{font-size:clamp(30px,5vw,46px);white-space:nowrap}
+.readout{text-align:center;margin-top:14px}
+.db{display:inline-block;background:#111;color:#ffe14d;border:4px solid var(--yellow);border-radius:16px;padding:4px 24px;
+  font-family:Bungee,Impact,sans-serif;font-size:clamp(48px,9vw,96px);line-height:1.1;text-shadow:0 0 14px rgba(255,225,77,.6)}
+.db small{font-size:.35em;margin-left:6px}
+.mood{font-family:Bungee,Impact,sans-serif;font-size:clamp(17px,2.4vw,26px);margin:10px 0 4px;color:var(--red);min-height:1.3em}
+.minirow{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;font-weight:600;font-size:14px}
+.pill{background:#fff;border:2px solid var(--ink);border-radius:999px;padding:4px 12px}
+
+/* contestants */
+.addrow{display:flex;gap:8px;margin-bottom:10px}
+.addrow input{flex:1;min-width:0;font:inherit;font-weight:600;padding:10px 12px;border:3px solid var(--ink);border-radius:12px;background:#fff}
+#list{display:flex;flex-direction:column;gap:8px;max-height:420px;overflow:auto;padding:2px}
+.row{display:grid;grid-template-columns:44px minmax(0,1fr) auto auto auto;align-items:center;gap:8px;background:#fff;border:3px solid #cdb98c;border-radius:14px;padding:8px 10px;cursor:pointer}
+.row.sel{border-color:var(--blue);box-shadow:0 0 0 3px var(--yellow)}
+.rank{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font-family:Bungee,Impact,sans-serif;background:#eee3c6;font-size:16px}
+.rank.r1{background:var(--yellow);font-size:20px}.rank.r2{background:#d9dde3;font-size:20px}.rank.r3{background:#e6b27a;font-size:20px}
+.nm{font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nm small{display:block;font-weight:600;color:#7a6440;font-size:12px}
+.sc{font-family:Bungee,Impact,sans-serif;font-size:22px;color:var(--red);text-align:right}
+.sc small{font-size:12px;color:var(--ink)}
+.go{background:var(--green);color:#fff;padding:8px 10px;box-shadow:0 3px 0 #0b5c2c}
+.x{background:transparent;color:#9b7f52;font-size:18px;padding:4px 6px}
+.empty{text-align:center;color:#7a6440;font-weight:600;padding:18px}
+
+.settings{display:grid;gap:12px;margin-top:6px}
+.set{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;font-weight:600}
+.seg{display:inline-flex;border:3px solid var(--ink);border-radius:12px;overflow:hidden}
+.seg button{border-radius:0;background:#fff;padding:7px 11px;color:var(--ink)}
+.seg button.on{background:var(--blue);color:#fff}
+input[type=range]{width:180px;accent-color:var(--red)}
+.hint{font-size:12.5px;color:#6b5634;font-weight:400;margin:2px 0 0}
+
+footer{max-width:1250px;margin:0 auto 26px;padding:0 14px;font-size:13.5px;text-align:center}
+footer b{color:var(--red)}
+
+/* overlay */
+.ov{position:fixed;inset:0;background:rgba(20,10,0,.82);display:none;align-items:center;justify-content:center;z-index:20;padding:16px}
+.ov.show{display:flex}
+.box{background:var(--cream);border:5px solid var(--ink);border-radius:26px;box-shadow:0 10px 0 var(--ink);padding:24px 28px;text-align:center;width:min(720px,100%);position:relative;overflow:hidden}
+.box .stripe{position:absolute;top:0;left:0;right:0}
+.who{font-family:Bungee,Impact,sans-serif;font-size:clamp(22px,4vw,38px);color:var(--blue);margin:12px 0 0;word-break:break-word}
+.big{font-family:"Bungee Shade",Bungee,Impact,sans-serif;font-size:clamp(80px,18vw,180px);line-height:1;color:var(--red);margin:10px 0}
+.livedb{font-family:Bungee,Impact,sans-serif;font-size:clamp(56px,12vw,120px);color:var(--red);line-height:1.05}
+.livedb small{font-size:.3em;color:var(--ink)}
+.prog{height:22px;border:3px solid var(--ink);border-radius:999px;background:#fff;overflow:hidden;margin:12px 0 8px}
+.prog i{display:block;height:100%;width:0;background:repeating-linear-gradient(45deg,var(--red) 0 14px,var(--yellow) 14px 28px,var(--blue) 28px 42px)}
+.btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:14px}
+.res{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin:10px 0}
+.res div{background:#fff;border:3px solid var(--ink);border-radius:14px;padding:8px 16px;min-width:150px}
+.res b{display:block;font-family:Bungee,Impact,sans-serif;font-size:32px;color:var(--red)}
+.res .main{background:var(--yellow)}
+
+.crown{font-size:70px;line-height:1;margin-top:10px}
+.champ{font-family:Bungee,Impact,sans-serif;font-size:clamp(34px,7vw,68px);color:var(--red);text-shadow:3px 3px 0 var(--yellow);margin:4px 0;word-break:break-word}
+.podium{display:flex;justify-content:center;align-items:flex-end;gap:10px;margin-top:16px}
+.pod{background:#fff;border:3px solid var(--ink);border-radius:12px 12px 0 0;padding:8px 10px;width:32%;font-weight:800;word-break:break-word}
+.pod .n{font-family:Bungee,Impact,sans-serif;font-size:26px}
+.pod.p1{background:var(--yellow);min-height:130px}.pod.p2{background:#e4e7eb;min-height:100px}.pod.p3{background:#eab886;min-height:80px}
+#confetti{position:fixed;inset:0;pointer-events:none;z-index:30}
+.plate h1{line-height:1.1}
+.ver{display:block;font-size:12px;font-weight:600;color:#7a6440;margin-top:4px}
+.qrimg{width:min(260px,70vw);margin:12px auto;background:#fff;border:4px solid var(--ink);border-radius:14px;padding:6px}
+.qrimg svg{display:block;width:100%;height:auto}
+
+/* ---------- NEON mode ---------- */
+body.neon{--cream:#150c2a;--ink:#a855f7;color:#f3eaff;
+  background:radial-gradient(ellipse at top,#2a0f4a 0,#0a0514 60%) fixed,#0a0514}
+body.neon .flags span{filter:drop-shadow(0 0 6px currentColor) brightness(1.2)}
+body.neon .plate{background:#0a0514;border-color:#ff2bd6;box-shadow:0 0 14px #ff2bd6,inset 0 0 14px #ff2bd6}
+body.neon .plate h1{color:#fff;text-shadow:0 0 6px #ff2bd6,0 0 18px #ff2bd6,0 0 36px #ff2bd6}
+body.neon .card,body.neon .box{box-shadow:0 0 18px rgba(168,85,247,.7)}
+body.neon .stripe{background:linear-gradient(90deg,#ff2bd6,#22e5ff,#2bff7a)}
+body.neon .card h2,body.neon .who{color:#22e5ff;text-shadow:0 0 10px #22e5ff}
+body.neon .row,body.neon .addrow input,body.neon .pill,body.neon .seg button:not(.on),body.neon .b-ghost,body.neon .res div:not(.main),body.neon .pod,body.neon .prog,body.neon .err{background:#1d1236;color:#f3eaff}
+body.neon .rank{background:#2a1c4a}
+body.neon .nm small,body.neon .hint,body.neon .empty{color:#b9a6d9}
+body.neon .sc,body.neon .big,body.neon .livedb,body.neon .mood,body.neon .res b{color:#ff4fd8;text-shadow:0 0 10px #ff4fd8}
+body.neon .db{border-color:#22e5ff;color:#22e5ff;box-shadow:0 0 18px #22e5ff;text-shadow:0 0 14px #22e5ff}
+body.neon .chart{background:#05020b;border-color:#a855f7;box-shadow:0 0 22px rgba(168,85,247,.7)}
+body.neon .chart h3{font-family:Bungee,Impact,sans-serif;font-weight:400;color:#fff;text-shadow:0 0 8px #22e5ff,0 0 22px #22e5ff}
+/* lights only: tubes, no numbers/labels/pictures */
+body.neon .lv .num,body.neon .lv .txt{display:none}
+body.neon .lv{display:block;height:clamp(46px,8vw,66px);margin:12px 8px;border:3px solid var(--c);border-radius:999px;background:transparent;opacity:.22;filter:none;transform:none;box-shadow:none}
+body.neon .lv.lit{opacity:1;background:var(--c);box-shadow:0 0 10px var(--c),0 0 28px var(--c),inset 0 0 14px rgba(255,255,255,.75)}
+body.neon .lv.on{box-shadow:0 0 14px var(--c),0 0 44px var(--c),0 0 80px var(--c),inset 0 0 16px #fff;animation:buzz .9s ease-in-out infinite alternate}
+@keyframes buzz{from{filter:brightness(1)}to{filter:brightness(1.35)}}
+@media (max-width:560px){
+  .plate{padding:8px 14px;gap:8px}.plate svg{width:38px;height:38px}
+  .plate h1{text-shadow:2px 2px 0 var(--yellow)}
+  .chart{padding:8px}.lv .txt{padding:6px 8px}.lv .pic{font-size:24px}.lv .txt b{font-size:17px}
+  .row{grid-template-columns:40px minmax(0,1fr) auto auto}
+  .rank{grid-row:span 2}.sc{grid-column:3/5}.go{grid-column:2;justify-self:start}.x{grid-column:4}
+}
+</style>
+</head>
+<body>
+<div class="banderitas"><div class="flags" id="flags"></div></div>
+
+<header>
+  <div class="plate">
+    <svg width="54" height="54" viewBox="-50 -50 100 100" aria-hidden="true">
+      <g fill="#FCD116" stroke="#2a1a0e" stroke-width="3">
+        <g id="ray"><polygon points="-6,-24 6,-24 0,-47"/></g>
+        <use href="#ray" transform="rotate(45)"/><use href="#ray" transform="rotate(90)"/><use href="#ray" transform="rotate(135)"/>
+        <use href="#ray" transform="rotate(180)"/><use href="#ray" transform="rotate(225)"/><use href="#ray" transform="rotate(270)"/><use href="#ray" transform="rotate(315)"/>
+        <circle r="20"/>
+      </g>
+    </svg>
+    <h1>Palakpakan Meter</h1>
+  </div>
+  <span class="ver" id="ver"></span>
+  <p class="sub">Sukatan ng Hiyawan at Palakpakan • Pang-contest ng Barangay, Opisina at Fiesta 🇵🇭</p>
+  <div class="topbtns">
+    <button class="b-blue" id="micBtn">🎤 Buksan ang Mic</button>
+    <button class="b-yel" id="fsBtn">⛶ Fullscreen</button>
+    <button class="b-ghost" id="neonBtn">💡 Neon</button>
+    <button class="b-ghost" id="shareBtn">📱 I-share ang App</button>
+    <button class="b-red" id="winBtn">🏆 Ianunsyo ang Panalo!</button>
+  </div>
+  <div class="err" id="err"></div>
+</header>
+
+<main>
+  <section class="card">
+    <div class="stripe"></div>
+    <div class="inner">
+      <div class="chart">
+        <h3>Lakas ng Hiyawan</h3>
+        <div id="levels"></div>
+      </div>
+      <div class="readout">
+        <div class="db"><span id="dbNum">--</span><small>dB</small></div>
+        <div class="mood" id="mood">Pindutin ang "Buksan ang Mic" para magsimula</div>
+      </div>
+      <div class="minirow" style="margin-top:10px">
+        <span class="pill">Pinakamataas: <b id="hold">--</b> dB <button class="x" id="holdReset" title="I-reset">↺</button></span>
+        <span class="pill">Napili: <b id="selName">wala pa</b></span>
+        <span class="pill">Space = Simulan</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="stripe"></div>
+    <div class="inner">
+      <h2>Mga Kalahok</h2>
+      <div class="addrow">
+        <input id="nameIn" placeholder="Pangalan ng kalahok / grupo" maxlength="40">
+        <button class="b-blue" id="addBtn">+ Idagdag</button>
+      </div>
+      <div id="list"></div>
+
+      <h2 style="margin-top:18px">Mga Setting ng Hurado</h2>
+      <div class="settings">
+        <div class="set">Haba ng bawat round
+          <div class="seg" id="durSeg"></div>
+        </div>
+        <div class="set">Batayan ng iskor
+          <div class="seg" id="basisSeg">
+            <button data-v="peak">Pinakamalakas</button><button data-v="avg">Karaniwan</button>
+          </div>
+        </div>
+        <p class="hint"><b>Pinakamalakas</b> = pinakamataas na dB sa buong round. <b>Karaniwan</b> = tuloy-tuloy na lakas (mas patas para sa matagal na palakpakan, hindi lang isang sigaw).</p>
+        <div class="set">Calibration: <span><b id="offVal">100</b> dB</span>
+          <input type="range" id="offIn" min="60" max="140" step="1">
+        </div>
+        <p class="hint">Opsyonal. Itabi sa totoong sound meter (o meter app) at i-adjust hanggang pareho ang basa. Huwag galawin habang may laban.</p>
+        <div class="set"><span></span><button class="b-ghost" id="resetBtn">🧹 Burahin lahat ng iskor</button></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <b>Tips ng Hurado:</b> Iisang pwesto ng laptop/phone para sa lahat • Parehong layo sa audience • Patayin ang speaker na malapit sa mic.<br>
+  Tantya lang ang dB (hindi certified na sound level meter), pero patas ang paghahambing basta pareho ang device at pwesto. Gawang Pinoy 🇵🇭
+</footer>
+
+<div class="ov" id="ov"><div class="box" id="box"></div></div>
+<canvas id="confetti"></canvas>
+
+<script>
+const APP_VERSION = '1.0.0';
+const APK_URL = 'https://github.com/gnotesamsung7-hue/palakpakan/releases/latest/download/PalakpakanMeter.apk';
+const $ = s => document.querySelector(s);
+const MIN = 30, MAX = 130, KEY = 'palakpakan-meter-v1';
+const COLORS = ['#CE1126','#FCD116','#0038A8','#ffffff','#13994a','#ff6fb1','#ff7a00'];
+let S = {list: [], dur: 10, basis: 'peak', offset: 100, sel: null};
+try { const j = JSON.parse(localStorage.getItem(KEY)); if (j) S = Object.assign(S, j); } catch (e) {}
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const fmt = v => (v == null || !isFinite(v)) ? '--' : v.toFixed(1);
+const clampD = v => Math.max(MIN, Math.min(MAX, v));
+const score = c => c.peak == null ? null : (S.basis === 'peak' ? c.peak : c.avg);
+
+/* ---------- static UI ---------- */
+const flags = $('#flags');
+for (let i = 0; i < 40; i++) { const f = document.createElement('span'); f.style.background = COLORS[i % COLORS.length]; f.style.animationDelay = (i % 5) * -.4 + 's'; flags.appendChild(f); }
+
+// Level chart, 0 (bottom) to 4 (top). [lower dB bound, color, label, range text, pictures, neon color]
+const LEVELS = [
+  [-Infinity, '#1b2a6b', 'Tahimik,<br>parang simbahan', 'mas mababa sa 55 dB', '🤫', '#2f7bff'],
+  [55,        '#1aa34a', 'Bulungan', '55–70 dB', '🙊💬', '#2bff7a'],
+  [70,        '#f4dd1b', 'Palakpak<br>lang', '70–85 dB', '👏🙂', '#ffe81f'],
+  [85,        '#f07c1a', 'Hiyawan at<br>Palakpakan!', '85–100 dB', '🙌📣', '#ff8a1f'],
+  [100,       '#e0201b', 'Pang-Fiesta!<br>Lindol na!', '100 dB pataas', '🎉🥁📣', '#ff2a4f'],
+];
+const levelOf = v => { let n = 0; LEVELS.forEach((l, i) => { if (v >= l[0]) n = i; }); return n; };
+$('#levels').innerHTML = LEVELS.map((l, i) => `<div class="lv" data-n="${i}" style="--c:${l[5]}"><div class="num" style="background:${l[1]}">${i}</div>
+  <div class="txt"><div><b>${l[2]}</b><small>${l[3]}</small></div><span class="pic">${l[4]}</span></div></div>`).reverse().join('');
+const lvEls = [...document.querySelectorAll('.lv')];
+let shownLv = -1;
+const mood = v => { const n = levelOf(v); return `Level ${n}: ${LEVELS[n][2].replace('<br>', ' ')}`; };
+
+const durSeg = $('#durSeg');
+[5, 10, 15, 20, 30].forEach(d => { const b = document.createElement('button'); b.textContent = d + 's'; b.dataset.v = d; durSeg.appendChild(b); });
+durSeg.onclick = e => { if (e.target.dataset.v && !busy) { S.dur = +e.target.dataset.v; save(); renderSettings(); } };
+$('#basisSeg').onclick = e => { if (e.target.dataset.v) { S.basis = e.target.dataset.v; save(); renderSettings(); renderList(); } };
+$('#offIn').oninput = e => { S.offset = +e.target.value; save(); renderSettings(); };
+function renderSettings() {
+  durSeg.querySelectorAll('button').forEach(b => b.classList.toggle('on', +b.dataset.v === S.dur));
+  $('#basisSeg').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === S.basis));
+  $('#offIn').value = S.offset; $('#offVal').textContent = S.offset;
+}
+
+/* ---------- contestants ---------- */
+function ranks() {
+  const sc = S.list.filter(c => score(c) != null).sort((a, b) => score(b) - score(a));
+  const r = {}; sc.forEach((c, i) => { r[c.id] = (i > 0 && score(c).toFixed(1) === score(sc[i - 1]).toFixed(1)) ? r[sc[i - 1].id] : i + 1; });
+  return {r, sc};
+}
+function renderList() {
+  const {r} = ranks(), L = $('#list');
+  if (!S.list.length) { L.innerHTML = '<div class="empty">Wala pang kalahok. Magdagdag sa taas! 🎤</div>'; }
+  else L.innerHTML = S.list.map(c => {
+    const k = r[c.id], medal = {1:'🥇',2:'🥈',3:'🥉'}[k];
+    return `<div class="row ${c.id === S.sel ? 'sel' : ''}" data-id="${c.id}">
+      <span class="rank ${k <= 3 ? 'r' + k : ''}">${medal || k || '–'}</span>
+      <span class="nm">${esc(c.name)}<small>${c.peak == null ? 'Hindi pa nasusukat' : `Pinakamalakas ${fmt(c.peak)} • Karaniwan ${fmt(c.avg)}`}</small></span>
+      <span class="sc">${fmt(score(c))}<small> dB</small></span>
+      <button class="go" data-go="${c.id}">🎤 ${c.peak == null ? 'Sukatin' : 'Ulitin'}</button>
+      <button class="x" data-del="${c.id}" title="Alisin">✕</button></div>`;
+  }).join('');
+  const s = S.list.find(c => c.id === S.sel);
+  $('#selName').textContent = s ? s.name : 'wala pa';
+}
+$('#list').onclick = e => {
+  const go = e.target.closest('[data-go]'), del = e.target.closest('[data-del]'), row = e.target.closest('.row');
+  if (busy) return;
+  if (del) { const c = S.list.find(x => x.id === del.dataset.del); confirmBox(`Alisin si <b>${esc(c.name)}</b>?`, 'Alisin', () => { S.list = S.list.filter(x => x !== c); if (S.sel === c.id) S.sel = null; save(); renderList(); }); return; }
+  if (row) { S.sel = row.dataset.id; save(); renderList(); }
+  if (go) runRound(go.dataset.go);
+};
+function addContestant() {
+  const n = $('#nameIn').value.trim() || ('Kalahok #' + (S.list.length + 1));
+  const c = {id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), name: n, peak: null, avg: null};
+  S.list.push(c); S.sel = c.id; $('#nameIn').value = ''; save(); renderList();
+}
+$('#addBtn').onclick = addContestant;
+$('#nameIn').onkeydown = e => { if (e.key === 'Enter') addContestant(); };
+
+/* ---------- audio ---------- */
+let actx, an, buf, live = false, levelPow = 1e-12, lastT = 0, needleV = MIN, hold = -Infinity, curL = MIN, meas = null;
+function showErr(html) { const e = $('#err'); e.innerHTML = html; e.style.display = html ? 'block' : 'none'; }
+async function startMic() {
+  if (live) return true;
+  try {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw new Error('Walang suporta sa mic ang browser na ito.');
+    const stream = await navigator.mediaDevices.getUserMedia({audio: {echoCancellation: false, noiseSuppression: false, autoGainControl: false}});
+    actx = new (window.AudioContext || window.webkitAudioContext)();
+    await actx.resume();
+    an = actx.createAnalyser(); an.fftSize = 2048; buf = new Float32Array(an.fftSize);
+    actx.createMediaStreamSource(stream).connect(an);
+    live = true; showErr('');
+    $('#micBtn').textContent = '🎤 Bukas ang Mic'; $('#micBtn').disabled = true;
+    requestAnimationFrame(tick);
+    return true;
+  } catch (e) {
+    showErr(`⚠️ Hindi mabuksan ang mic: ${esc(e.message || e.name)}<br>
+      Payagan ang microphone sa address bar ng browser. Buksan ang file na ito sa Chrome o Edge (hindi sa preview ng chat o email).`);
+    return false;
+  }
+}
+$('#micBtn').onclick = startMic;
+function tick(t) {
+  const dt = lastT ? Math.min((t - lastT) / 1000, .25) : .016; lastT = t;
+  an.getFloatTimeDomainData(buf);
+  let s = 0; for (let i = 0; i < buf.length; i++) s += buf[i] * buf[i];
+  const p = s / buf.length + 1e-12;
+  levelPow += (1 - Math.exp(-dt / .125)) * (p - levelPow);   // FAST time weighting (125 ms)
+  curL = 10 * Math.log10(levelPow) + S.offset;
+  if (meas) { meas.e += p * dt; meas.t += dt; meas.peak = Math.max(meas.peak, curL); }
+  hold = Math.max(hold, curL);
+  needleV += (clampD(curL) - needleV) * Math.min(1, dt * 12);
+  const lv = levelOf(needleV);   // smoothed value, so the highlight doesn't flicker
+  if (lv !== shownLv) { shownLv = lv; lvEls.forEach(el => { el.classList.toggle('on', +el.dataset.n === lv); el.classList.toggle('lit', +el.dataset.n <= lv); }); $('#mood').textContent = mood(needleV); }
+  $('#dbNum').textContent = Math.round(clampD(curL));
+  $('#hold').textContent = fmt(hold);
+  if (meas && meas.onTick) meas.onTick();
+  requestAnimationFrame(tick);
+}
+$('#holdReset').onclick = () => { hold = -Infinity; };
+function beep(f, d = .18) {
+  try { const o = actx.createOscillator(), g = actx.createGain(); o.frequency.value = f; g.gain.value = .15;
+    o.connect(g).connect(actx.destination); o.start(); g.gain.exponentialRampToValueAtTime(.001, actx.currentTime + d); o.stop(actx.currentTime + d); } catch (e) {}
+}
+
+/* ---------- overlay & rounds ---------- */
+const ov = $('#ov'), box = $('#box');
+function openBox(html) { box.innerHTML = '<div class="stripe"></div>' + html; ov.classList.add('show'); }
+function closeBox() { ov.classList.remove('show'); }
+function confirmBox(msg, yes, fn) {
+  openBox(`<div class="who" style="font-size:24px">${msg}</div><div class="btns"><button class="b-red" id="cYes">${yes}</button><button class="b-ghost" id="cNo">Huwag na</button></div>`);
+  $('#cYes').onclick = () => { closeBox(); fn(); }; $('#cNo').onclick = closeBox;
+}
+let busy = false, abort = false;
+async function runRound(id) {
+  const c = S.list.find(x => x.id === id); if (!c || busy) return;
+  if (!(await startMic())) return;
+  busy = true; abort = false; S.sel = id; renderList();
+  openBox(`<div class="who">${esc(c.name)}</div><div class="big" id="cd">Handa…</div><div class="btns"><button class="b-ghost" id="stop">✋ Itigil</button></div>`);
+  $('#stop').onclick = () => { abort = true; };
+  await sleep(900);
+  for (const n of [3, 2, 1]) { if (abort) break; $('#cd').textContent = n; beep(660); await sleep(1000); }
+  if (!abort) {
+    openBox(`<div class="who">${esc(c.name)} — SIGAW NA! 📣</div>
+      <div class="livedb"><span id="lv">--</span><small> dB</small></div>
+      <div class="prog"><i id="pg"></i></div>
+      <div class="minirow" style="justify-content:center"><span class="pill">Natitira: <b id="left">${S.dur}</b>s</span><span class="pill">Pinakamalakas: <b id="pk">--</b> dB</span></div>
+      <div class="btns"><button class="b-ghost" id="stop">✋ Itigil</button></div>`);
+    $('#stop').onclick = () => { abort = true; };
+    meas = {e: 0, t: 0, peak: -Infinity, onTick() {
+      $('#lv').textContent = Math.round(clampD(curL)); $('#pk').textContent = fmt(meas.peak);
+      $('#pg').style.width = Math.min(100, meas.t / S.dur * 100) + '%';
+      $('#left').textContent = Math.max(0, Math.ceil(S.dur - meas.t));
+    }};
+    while (!abort && meas.t < S.dur) await sleep(30);
+  }
+  const m = meas; meas = null; busy = false;
+  if (abort || !m || m.t <= 0) { closeBox(); return; }
+  beep(990, .45);
+  c.peak = m.peak; c.avg = 10 * Math.log10(m.e / m.t) + S.offset; save(); renderList();
+  const main = S.basis === 'peak' ? 'peak' : 'avg';
+  openBox(`<div class="who">Iskor ni ${esc(c.name)}</div>
+    <div class="res"><div class="${main === 'peak' ? 'main' : ''}">Pinakamalakas<b>${fmt(c.peak)}</b>dB</div><div class="${main === 'avg' ? 'main' : ''}">Karaniwan<b>${fmt(c.avg)}</b>dB</div></div>
+    <div class="mood">${mood(score(c))}</div>
+    <div class="btns"><button class="b-blue" id="ok">👍 Sige!</button><button class="b-ghost" id="again">🔁 Ulitin</button></div>`);
+  $('#ok').onclick = closeBox; $('#again').onclick = () => { closeBox(); runRound(id); };
+}
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT') return;
+  if (e.code === 'Space' && !busy && !ov.classList.contains('show') && S.sel) { e.preventDefault(); runRound(S.sel); }
+  if (e.key === 'Escape') { if (busy) abort = true; else closeBox(); }
+});
+
+/* ---------- winner ---------- */
+$('#winBtn').onclick = () => {
+  if (busy) return;
+  const {r, sc} = ranks();
+  if (!sc.length) { openBox(`<div class="who">Wala pang nasusukat na kalahok!</div><div class="btns"><button class="b-blue" id="ok">Sige</button></div>`); $('#ok').onclick = closeBox; return; }
+  const top = sc.filter(c => r[c.id] === 1), rest = sc.filter(c => r[c.id] !== 1);
+  const pod = (c, k) => c ? `<div class="pod p${k}">${['','🥇','🥈','🥉'][k]}<div>${esc(c.name)}</div><div class="n">${fmt(score(c))}</div></div>` : '';
+  openBox(`<div class="crown">👑</div>
+    <div class="who">${top.length > 1 ? 'TABLA! Mga Kampeon' : 'Ang Kampeon ng Hiyawan'}</div>
+    <div class="champ">${top.map(c => esc(c.name)).join(' & ')}</div>
+    <div class="mood">${fmt(score(top[0]))} dB (${S.basis === 'peak' ? 'Pinakamalakas' : 'Karaniwan'}) — Palakpakan naman diyan! 👏🎉</div>
+    ${top.length === 1 && rest.length ? `<div class="podium">${pod(rest[0], 2)}${pod(top[0], 1)}${pod(rest[1], 3)}</div>` : ''}
+    <div class="btns"><button class="b-blue" id="ok">Salamat po! 🙏</button></div>`);
+  $('#ok').onclick = closeBox;
+  confetti();
+};
+function confetti() {
+  const cv = $('#confetti'), g = cv.getContext('2d'); cv.width = innerWidth; cv.height = innerHeight;
+  const P = Array.from({length: 220}, () => ({x: Math.random() * cv.width, y: -20 - Math.random() * cv.height, w: 6 + Math.random() * 8, h: 10 + Math.random() * 10,
+    c: COLORS[Math.random() * COLORS.length | 0], vy: 2 + Math.random() * 3, vx: -1 + Math.random() * 2, r: Math.random() * 6, vr: -.1 + Math.random() * .2}));
+  const end = performance.now() + 5000;
+  (function f(t) {
+    g.clearRect(0, 0, cv.width, cv.height);
+    P.forEach(p => { p.x += p.vx; p.y += p.vy; p.r += p.vr; g.save(); g.translate(p.x, p.y); g.rotate(p.r); g.fillStyle = p.c; g.fillRect(-p.w / 2, -p.h / 2, p.w, p.h); g.restore(); });
+    if (t < end) requestAnimationFrame(f); else g.clearRect(0, 0, cv.width, cv.height);
+  })(performance.now());
+}
+
+/* ---------- misc ---------- */
+$('#fsBtn').onclick = () => { try { document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); } catch (e) {} };
+$('#resetBtn').onclick = () => { if (!busy) confirmBox('Burahin ang <b>lahat ng iskor</b>? (Maiiwan ang mga pangalan)', 'Burahin', () => { S.list.forEach(c => { c.peak = c.avg = null; }); save(); renderList(); }); };
+function applyNeon() { document.body.classList.toggle('neon', !!S.neon); $('#neonBtn').textContent = S.neon ? '☀️ Normal' : '💡 Neon'; }
+$('#neonBtn').onclick = () => { S.neon = !S.neon; save(); applyNeon(); };
+$('#ver').textContent = 'v' + APP_VERSION;
+$('#shareBtn').onclick = () => {
+  const q = qrcode(0, 'M'); q.addData(APK_URL); q.make();
+  openBox(`<div class="who">I-scan para ma-download ang App 📱</div><div class="qrimg">${q.createSvgTag({cellSize: 8, margin: 2, scalable: true})}</div>
+    <p style="word-break:break-all;font-size:13px">${APK_URL}</p><div class="btns"><button class="b-blue" id="ok">Sige</button></div>`);
+  $('#ok').onclick = closeBox;
+};
+if (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) $('#fsBtn').style.display = 'none';
+applyNeon(); renderSettings(); renderList();
+</script>
+</body>
+</html>

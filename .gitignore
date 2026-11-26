@@ -1,0 +1,5 @@
+node_modules/
+*.jks
+*.keystore
+github-secrets-*.txt
+ANDROID_KEYSTORE_BASE64*.txt
